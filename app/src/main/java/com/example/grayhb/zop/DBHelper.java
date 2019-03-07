@@ -63,6 +63,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public boolean SaveZOP(String StudentId, String date, String TypeData, Boolean flChecked) {
 
+        ConvertDate();
+
+        date = GetDateInSQLiteFormat(date);
+
         SQLiteDatabase db = this.getReadableDatabase();
 
         ContentValues contentValues = new ContentValues();
@@ -95,6 +99,34 @@ public class DBHelper extends SQLiteOpenHelper {
             return true;
     }
 
+    private void ConvertDate() {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor c = db.rawQuery("select Date, StudentId from ZOP where Date like '%.%'", null);
+
+        Log.d("DBHelper", String.format("{0}", c.getCount()));
+
+        if (c.getCount() == 0) return;
+
+        while (c.moveToNext()) {
+
+            String date = c.getString(0);
+            String studentId = c.getString(1);
+
+            Log.d("DBHelper", date);
+            Log.d("DBHelper", studentId);
+
+            String dateNew = GetDateInSQLiteFormat(date);
+
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("Date", dateNew);
+
+            db.update("ZOP", contentValues,
+            "date = '" + date + "' and StudentId = '" + studentId + "'", null);
+        }
+    }
+
     /** Получить всех учеников */
     public Cursor GetAllStudents(boolean flSort)
     {
@@ -119,21 +151,22 @@ public class DBHelper extends SQLiteOpenHelper {
     public Cursor GetZOPData(String date, String StudentId)
     {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("select * from ZOP where Date = ? And StudentId = ?", new String[] {date, StudentId});
+        return db.rawQuery("select * from ZOP where Date = ? And StudentId = ?", new String[] {GetDateInSQLiteFormat(date), StudentId});
     }
 
-    public Cursor GetZOPDataStatic(String StudentId, Date d1, Date d2)
+    public Cursor GetZOPDataStatic(String StudentId, String d1, String d2)
     {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("select StudentId, SUM(Z) as cntZ, SUM(O) as cntO, SUM(P) as cntP from ZOP where StudentId = ? AND Date BETWEEN ? AND ? ", new String[] {StudentId, dateFormat.format(d1), dateFormat.format(d2)});
+
+        return db.rawQuery("select StudentId, SUM(Z) as cntZ, SUM(O) as cntO, SUM(P) as cntP from ZOP where StudentId = ? AND Date BETWEEN ? AND ? ", new String[] {StudentId, GetDateInSQLiteFormat(d1), GetDateInSQLiteFormat(d2)});
     }
 
     boolean ExistStudentZOP(String StudentId, String date)
     {
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor =  db.rawQuery("select * from ZOP where Date = ? AND StudentId = ?", new String[] {date, StudentId});
+        Cursor cursor =  db.rawQuery("select * from ZOP where Date = ? AND StudentId = ?", new String[] {GetDateInSQLiteFormat(date), StudentId});
 
         if (cursor.getCount() > 0)
             return true;
@@ -146,6 +179,26 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         long flDelete = db.delete("Students", "StudentId = ?", new String[]{StudentId});
         flDelete = db.delete("ZOP", "StudentId = ?", new String[]{StudentId});
+    }
+
+    private String GetDateInSQLiteFormat(String D) {
+
+        SimpleDateFormat dateFormatOld = new SimpleDateFormat("dd.MM.yyyy");
+        SimpleDateFormat dateFormatNew = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+        //Log.d("DBHelper", D);
+        //Log.d("DBHelper", dateFormatOld.format(date));
+        if (D.contains("-")) return D;
+
+        try {
+            //Log.d("DBHelper", dateFormatNew.format(dateFormatOld.parse(D)));
+            return dateFormatNew.format(dateFormatOld.parse(D));
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+            Log.d("DBHelper-Error", D);
+            return "";
+        }
     }
 
 }

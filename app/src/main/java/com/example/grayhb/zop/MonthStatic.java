@@ -30,8 +30,8 @@ public class MonthStatic extends AppCompatActivity {
     Cursor zopData;
 
     TableLayout mainTable;
-    String D;
-    Date d1, d2;
+
+    String d1, d2;
 
     Integer widthColumn;
 
@@ -41,14 +41,13 @@ public class MonthStatic extends AppCompatActivity {
         setContentView(R.layout.activity_month_static);
         widthColumn = 175;
         mainTable = (TableLayout)findViewById(R.id.MonthStaticTable);
-
-        D = getIntent().getStringExtra("selectDate");
+        String D = getIntent().getStringExtra("selectDate");
 
         db = new DBHelper(this);
 
         TextView monthLabel = (TextView)findViewById(R.id.MonthLabel);
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
-        SimpleDateFormat dateFormat2 = new SimpleDateFormat("MM.yyyy", Locale.getDefault());
+        SimpleDateFormat dateFormat2 = new SimpleDateFormat("01.MM.yyyy", Locale.getDefault());
         SimpleDateFormat month_date = new SimpleDateFormat("LLLL yyyy", Locale.getDefault());
 
         Calendar c = Calendar.getInstance();
@@ -56,13 +55,17 @@ public class MonthStatic extends AppCompatActivity {
         try {
             monthLabel.setText("Статистика " + month_date.format(dateFormat.parse(D)));
 
-            d1 = dateFormat.parse("01." + dateFormat2.format(dateFormat.parse(D)));
+            d1 = dateFormat2.format(dateFormat.parse(D));
 
-            c.setTime(d1);
+            Log.d("MonthStatic", D);
+            Log.d("MonthStatic", dateFormat.parse(D).toString());
+            Log.d("MonthStatic", dateFormat.parse(dateFormat2.format(dateFormat.parse(D))).toString());
+
+            c.setTime(dateFormat2.parse(d1));
             c.add(Calendar.MONTH, 1);
             c.add(Calendar.DATE, -1);
 
-            d2 = dateFormat.parse(dateFormat.format(c.getTime()));
+            d2 = dateFormat.format(c.getTime());
 
             //Cursor cursor = db.GetZOPDataStatic(d1, d2);
             //тут дописать
